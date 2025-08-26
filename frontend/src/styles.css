@@ -1,21 +1,99 @@
 
-:root { --bg:#0b0e14; --card:#121826; --text:#eaeef6; --muted:#9aa4b2; --ok:#1bc47d; --bad:#ef476f; --warn:#ffd166; }
+/* Dark theme variables (default) */
+.app { 
+  --bg:#0b0e14; 
+  --card:#121826; 
+  --text:#eaeef6; 
+  --muted:#9aa4b2; 
+  --ok:#1bc47d; 
+  --bad:#ef476f; 
+  --warn:#ffd166; 
+}
+
+/* Light theme variables */
+.app.light {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --ok: #059669;
+  --bad: #dc2626;
+  --warn: #d97706;
+}
+
 * { box-sizing: border-box; }
-body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text); }
-.app { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text); transition: background-color 0.3s ease, color 0.3s ease; }
+.app { max-width: 1100px; margin: 24px auto; padding: 0 16px; transition: all 0.3s ease; }
 .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
 .cards { display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
-.card { background:var(--card); border-radius:16px; padding:16px; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
-.card .label { color: var(--muted); font-size: 12px; }
-.card .value { font-size: 28px; margin-top: 8px; }
+.card { background:var(--card); border-radius:16px; padding:16px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); }
+.app.light .card { border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+.card .label { color: var(--muted); font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.card .value { font-size: 28px; margin-top: 8px; font-weight: 600; }
+.card .sub-value { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.card .value.success { color: var(--ok); }
+.card .value.failure { color: var(--bad); }
+
 .table { width:100%; border-collapse: collapse; margin-top:16px; background:var(--card); border-radius: 16px; overflow: hidden; }
 th, td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px; }
+.app.light th, .app.light td { border-bottom: 1px solid rgba(0,0,0,0.1); }
 .status { padding: 2px 8px; border-radius:999px; font-size:12px; }
 .status.success { background: rgba(27, 196, 125, 0.15); color: var(--ok); }
 .status.failed { background: rgba(239, 71, 111, 0.15); color: var(--bad); }
 .status.running { background: rgba(255, 209, 102, 0.15); color: var(--warn); }
 .filters { display:flex; gap:8px; margin: 8px 0; }
-input, select, button { background:#161c2e; border:1px solid #2a344a; color:#eaeef6; padding:8px 10px; border-radius: 10px; }
+input, select, button { background:#161c2e; border:1px solid #2a344a; color:#eaeef6; padding:8px 10px; border-radius: 10px; transition: all 0.2s ease; }
+.app.light input, .app.light select, .app.light button { background: #f1f5f9; border: 1px solid #cbd5e1; color: #1e293b; }
 button { cursor: pointer; }
+button:hover { opacity: 0.8; transform: translateY(-1px); }
 .link { color:#7cc1ff; text-decoration:none; }
 .ws { font-size: 12px; color: var(--muted); }
+
+/* Theme toggle button styling */
+.theme-toggle { 
+  background: var(--card); 
+  border: 1px solid rgba(255,255,255,0.1); 
+  color: var(--text); 
+  padding: 8px 16px; 
+  border-radius: 20px; 
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+.app.light .theme-toggle { 
+  border: 1px solid rgba(0,0,0,0.1); 
+}
+.theme-toggle:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+}
+
+/* Chart styling */
+.recharts-wrapper {
+  background: transparent !important;
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--muted) !important;
+  opacity: 0.3;
+}
+
+.recharts-text {
+  fill: var(--text) !important;
+}
+
+.recharts-legend-item-text {
+  color: var(--text) !important;
+}
+
+.recharts-tooltip {
+  background: var(--card) !important;
+  border: 1px solid var(--muted) !important;
+  border-radius: 8px;
+  color: var(--text) !important;
+}
+
+/* Ensure charts are visible */
+.card .recharts-responsive-container {
+  min-height: 180px;
+}

@@ -44,6 +44,7 @@ seed_sample_data()
 class MetricsOverview(BaseModel):
     success_rate: float
     failure_rate: float
+    total_builds: int
     avg_build_time_seconds: Optional[float]
     last_build_status: Optional[str]
     last_build_at: Optional[datetime]
@@ -59,6 +60,7 @@ def metrics_overview(session=Depends(get_session)):
     return MetricsOverview(
         success_rate = round((success/total)*100,2) if total else 0.0,
         failure_rate = round((failure/total)*100,2) if total else 0.0,
+        total_builds = total,
         avg_build_time_seconds = float(avg) if avg is not None else None,
         last_build_status = last_status,
         last_build_at = last_at,

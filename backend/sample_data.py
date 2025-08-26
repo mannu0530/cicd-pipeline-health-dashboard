@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import random
 from db import get_session, Pipeline, Build
+from random_data_generator import generate_random_pipeline_name, generate_random_build_status, generate_random_build_duration, generate_random_error_log
 
 # Sample pipeline data with more variety
 SAMPLE_PIPELINES = [
@@ -44,10 +45,11 @@ def generate_sample_builds():
             days_ago = random.betavariate(2, 5) * 30  # Beta distribution for more recent bias
             started_at = now - timedelta(days=days_ago)
             
-            # Random status based on weights
-            status = random.choices(BUILD_STATUSES, weights=STATUS_WEIGHTS)[0]
+            # Use random generator for status and duration
+            status = generate_random_build_status()
+            duration_seconds = None
+            finished_at = None
             
-            # Duration varies by status, pipeline type, and provider
             if status in ["running", "pending"]:
                 duration_seconds = None
                 finished_at = None
@@ -55,20 +57,7 @@ def generate_sample_builds():
                 duration_seconds = 0
                 finished_at = started_at
             else:
-                # Realistic build durations based on pipeline type
-                if "ml-service" in pipeline_data["name"] or "data-pipeline" in pipeline_data["name"]:
-                    duration_seconds = random.randint(1800, 7200)  # 30 min - 2 hours
-                elif "analytics" in pipeline_data["name"] or "etl" in pipeline_data["name"]:
-                    duration_seconds = random.randint(900, 3600)   # 15 min - 1 hour
-                elif "deployment" in pipeline_data["name"]:
-                    duration_seconds = random.randint(300, 1800)   # 5 min - 30 min
-                elif "security" in pipeline_data["name"] or "performance" in pipeline_data["name"]:
-                    duration_seconds = random.randint(600, 2400)   # 10 min - 40 min
-                elif "docker" in pipeline_data["name"]:
-                    duration_seconds = random.randint(180, 900)    # 3 min - 15 min
-                else:
-                    duration_seconds = random.randint(120, 2700)   # 2 min - 45 min
-                
+                duration_seconds = generate_random_build_duration(pipeline_data["name"])
                 finished_at = started_at + timedelta(seconds=duration_seconds)
             
             # External ID format varies by provider
@@ -87,46 +76,10 @@ def generate_sample_builds():
             else:  # jenkins
                 web_url = f"{pipeline_data['url']}/{external_id}"
             
-            # Sample logs for failed builds with different error types
+            # Generate error logs for failed builds using random generator
             logs = None
             if status == "failed":
-                error_types = [
-                    f"""Build failed at {finished_at}
-Error: Test suite failed
-- Unit tests: {random.randint(1, 5)} failures
-- Integration tests: {random.randint(0, 3)} failures
-- Build step 'npm test' exited with code 1
-See full logs at: {web_url}""",
-                    
-                    f"""Build failed at {finished_at}
-Error: Compilation error
-- Syntax error in src/main.js:45
-- Missing dependency: lodash
-- Build step 'npm run build' failed
-See full logs at: {web_url}""",
-                    
-                    f"""Build failed at {finished_at}
-Error: Deployment timeout
-- Kubernetes deployment stuck in pending state
-- Resource quota exceeded
-- Build step 'kubectl apply' timed out
-See full logs at: {web_url}""",
-                    
-                    f"""Build failed at {finished_at}
-Error: Security scan failed
-- High severity vulnerability detected
-- CVE-2024-1234: SQL injection in login form
-- Build step 'security-scan' failed
-See full logs at: {web_url}""",
-                    
-                    f"""Build failed at {finished_at}
-Error: Performance regression
-- Response time increased by 45%
-- Memory usage exceeded threshold
-- Build step 'performance-test' failed
-See full logs at: {web_url}"""
-                ]
-                logs = random.choice(error_types)
+                logs = generate_random_error_log()
             
             builds.append({
                 "pipeline_id": pipeline_id,
