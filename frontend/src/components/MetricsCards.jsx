@@ -15,6 +15,21 @@ export default function MetricsCards({ overview }){
     return `${Math.round(seconds / 3600)}h ${Math.round((seconds % 3600) / 60)}m`
   }
 
+  // Format date for last build
+  const formatLastBuildTime = (dateString) => {
+    if (!dateString) return '—'
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+    
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    return `${diffDays}d ago`
+  }
+
   return (
     <div className="cards">
       <div className="card">
@@ -33,9 +48,19 @@ export default function MetricsCards({ overview }){
         <div className="sub-value">per build</div>
       </div>
       <div className="card">
+        <div className="label">Total Pipelines</div>
+        <div className="value">{overview?.total_pipelines ?? 0}</div>
+        <div className="sub-value">{overview?.active_pipelines ?? 0} active</div>
+      </div>
+      <div className="card">
+        <div className="label">Builds Today</div>
+        <div className="value">{overview?.builds_today ?? 0}</div>
+        <div className="sub-value">{overview?.builds_this_week ?? 0} this week</div>
+      </div>
+      <div className="card">
         <div className="label">Last Build</div>
         <div className="value">{overview?.last_build_status ?? '—'}</div>
-        <div className="sub-value">{overview?.last_build_at ? new Date(overview.last_build_at).toLocaleTimeString() : '—'}</div>
+        <div className="sub-value">{formatLastBuildTime(overview?.last_build_at)}</div>
       </div>
     </div>
   )

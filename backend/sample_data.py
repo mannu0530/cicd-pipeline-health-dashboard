@@ -6,23 +6,23 @@ from random_data_generator import generate_random_pipeline_name, generate_random
 # Sample pipeline data with more variety
 SAMPLE_PIPELINES = [
     # GitHub Actions - Frontend/Web apps
-    {"provider": "github", "name": "frontend-app", "external_id": "12345", "url": "https://github.com/company/frontend-app"},
-    {"provider": "github", "name": "backend-api", "external_id": "67890", "url": "https://github.com/company/backend-api"},
-    {"provider": "github", "name": "mobile-app", "external_id": "11111", "url": "https://github.com/company/mobile-app"},
-    {"provider": "github", "name": "docs-site", "external_id": "22222", "url": "https://github.com/company/docs-site"},
+    {"provider": "github", "name": "frontend-app", "external_id": "12345", "url": "https://github.com/company/frontend-app", "is_active": True},
+    {"provider": "github", "name": "backend-api", "external_id": "67890", "url": "https://github.com/company/backend-api", "is_active": True},
+    {"provider": "github", "name": "mobile-app", "external_id": "11111", "url": "https://github.com/company/mobile-app", "is_active": True},
+    {"provider": "github", "name": "docs-site", "external_id": "22222", "url": "https://github.com/company/docs-site", "is_active": True},
     
     # GitLab CI - Data/ML services
-    {"provider": "gitlab", "name": "data-pipeline", "external_id": "33333", "url": "https://gitlab.com/company/data-pipeline"},
-    {"provider": "gitlab", "name": "ml-service", "external_id": "44444", "url": "https://gitlab.com/company/ml-service"},
-    {"provider": "gitlab", "name": "analytics-engine", "external_id": "55555", "url": "https://gitlab.com/company/analytics-engine"},
-    {"provider": "gitlab", "name": "etl-processor", "external_id": "66666", "url": "https://gitlab.com/company/etl-processor"},
+    {"provider": "gitlab", "name": "data-pipeline", "external_id": "33333", "url": "https://gitlab.com/company/data-pipeline", "is_active": True},
+    {"provider": "gitlab", "name": "ml-service", "external_id": "44444", "url": "https://gitlab.com/company/ml-service", "is_active": True},
+    {"provider": "gitlab", "name": "analytics-engine", "external_id": "55555", "url": "https://gitlab.com/company/analytics-engine", "is_active": True},
+    {"provider": "gitlab", "name": "etl-processor", "external_id": "66666", "url": "https://gitlab.com/company/etl-processor", "is_active": True},
     
     # Jenkins - Infrastructure/Deployment
-    {"provider": "jenkins", "name": "deployment-jobs", "external_id": "77777", "url": "http://jenkins.company.com/job/deployment-jobs"},
-    {"provider": "jenkins", "name": "integration-tests", "external_id": "88888", "url": "http://jenkins.company.com/job/integration-tests"},
-    {"provider": "jenkins", "name": "security-scan", "external_id": "99999", "url": "http://jenkins.company.com/job/security-scan"},
-    {"provider": "jenkins", "name": "performance-tests", "external_id": "10101", "url": "http://jenkins.company.com/job/performance-tests"},
-    {"provider": "jenkins", "name": "docker-builds", "external_id": "12121", "url": "http://jenkins.company.com/job/docker-builds"},
+    {"provider": "jenkins", "name": "deployment-jobs", "external_id": "77777", "url": "http://jenkins.company.com/job/deployment-jobs", "is_active": True},
+    {"provider": "jenkins", "name": "integration-tests", "external_id": "88888", "url": "http://jenkins.company.com/job/integration-tests", "is_active": True},
+    {"provider": "jenkins", "name": "security-scan", "external_id": "99999", "url": "http://jenkins.company.com/job/security-scan", "is_active": True},
+    {"provider": "jenkins", "name": "performance-tests", "external_id": "10101", "url": "http://jenkins.company.com/job/performance-tests", "is_active": True},
+    {"provider": "jenkins", "name": "docker-builds", "external_id": "12121", "url": "http://jenkins.company.com/job/docker-builds", "is_active": True},
 ]
 
 # Enhanced build statuses with more realistic distribution
@@ -135,3 +135,26 @@ def seed_sample_data():
         print(f"- {len([p for p in SAMPLE_PIPELINES if p['provider'] == 'jenkins'])} Jenkins pipelines")
         print(f"- Builds spanning the last 30 days with realistic status distribution")
         print(f"- Sample error logs for failed builds")
+
+def clear_sample_data():
+    """Clear all sample data from the database"""
+    with next(get_session()) as session:
+        print("Clearing sample data...")
+        
+        # Delete builds first (due to foreign key constraint)
+        build_count = session.query(Build).count()
+        session.query(Build).delete()
+        
+        # Delete pipelines
+        pipeline_count = session.query(Pipeline).count()
+        session.query(Pipeline).delete()
+        
+        session.commit()
+        print(f"Cleared {build_count} builds and {pipeline_count} pipelines")
+
+def reset_sample_data():
+    """Reset the database by clearing and reseeding sample data"""
+    print("Resetting sample data...")
+    clear_sample_data()
+    seed_sample_data()
+    print("✅ Sample data reset completed!")

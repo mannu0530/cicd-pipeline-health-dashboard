@@ -3,23 +3,18 @@ import React, { useEffect, useState, useRef } from 'react'
 import { fetchOverview, fetchBuilds, wsConnect } from './api'
 import MetricsCards from './components/MetricsCards.jsx'
 import BuildsTable from './components/BuildsTable.jsx'
-import { SuccessFailureChart, AvgBuildTimeChart } from './components/Charts.jsx'
+import { SuccessFailureChart, AvgBuildTimeChart, BuildTrendsChart, PipelinePerformanceChart } from './components/Charts.jsx'
+import BuildStats from './components/BuildStats.jsx'
 import LogViewer from './components/LogViewer.jsx'
 
 export default function App(){
   const [overview, setOverview] = useState(null)
   const [builds, setBuilds] = useState([])
   const [filters, setFilters] = useState({ provider:'', status:'', q:'' })
-  const [chartData, setChartData] = useState({
-    sf: Array.from({length: 10}, (_, i) => ({
-      time: `Build ${i+1}`,
-      success: Math.floor(Math.random() * 4) + 2,
-      failed: Math.floor(Math.random() * 2)
-    })),
-    avg: Array.from({length: 10}, (_, i) => ({
-      time: `Build ${i+1}`,
-      avg: Math.floor(Math.random() * 300) + 60
-    }))
+  const [chartSettings, setChartSettings] = useState({
+    days: 7,
+    showTrends: true,
+    showPipelinePerformance: true
   })
   const [selectedBuild, setSelectedBuild] = useState(null)
   const wsRef = useRef(null)
@@ -28,56 +23,13 @@ export default function App(){
   async function load(){
     setOverview(await fetchOverview())
     setBuilds(await fetchBuilds(clean(filters)))
-    
-    // For demo chart data, create simple aggregates from builds
-    const rows = await fetchBuilds({limit:100})
-    
-    if (rows && rows.length > 0) {
-      // Create meaningful chart data from actual builds
-      const times = rows.slice(0,20).reverse().map((r,i)=>({
-        time: r.id ? `#${r.id}` : `Build ${i+1}`, 
-        success: r.status==='success'?1:0, 
-        failed: r.status==='failed'?1:0, 
-        avg: r.duration_seconds||0
-      }))
-      
-      // Ensure we have at least some data for charts
-      if (times.length > 0) {
-        console.log('Setting chart data from builds:', times)
-        setChartData({
-          sf: times.map(t=>({time:t.time, success: t.success, failed: t.failed})), 
-          avg: times.map(t=>({time:t.time, avg:t.avg}))
-        })
-      } else {
-        console.log('No build data available, using fallback')
-        generateFallbackChartData()
-      }
-    } else {
-      generateFallbackChartData()
-    }
-  }
-
-  function generateFallbackChartData() {
-    // Generate realistic fallback chart data
-    const fallbackData = Array.from({length: 15}, (_, i) => ({
-      time: `Build ${i+1}`,
-      success: Math.floor(Math.random() * 4) + 2, // 2-5 successful builds
-      failed: Math.floor(Math.random() * 2),      // 0-1 failed builds
-      avg: Math.floor(Math.random() * 1200) + 300 // 5-25 minutes
-    }))
-    
-    console.log('Generating fallback chart data:', fallbackData)
-    
-    setChartData({
-      sf: fallbackData.map(t=>({time:t.time, success: t.success, failed: t.failed})), 
-      avg: fallbackData.map(t=>({time:t.time, avg:t.avg}))
-    })
   }
 
   useEffect(() => { 
     console.log('App mounted, loading data...')
     load() 
   }, [])
+  
   useEffect(() => { 
     console.log('Filters changed, reloading data...')
     load() 
@@ -106,10 +58,64 @@ export default function App(){
 
       <MetricsCards overview={overview} />
 
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:12}}>
-        <SuccessFailureChart data={chartData.sf} />
-        <AvgBuildTimeChart data={chartData.avg} />
+      {/* Build Statistics */}
+      <div style={{marginTop: 12}}>
+        <BuildStats />
       </div>
+
+      {/* Chart Controls */}
+      <div className="chart-controls" style={{marginTop: 12, marginBottom: 12}}>
+        <div style={{display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap'}}>
+          <label>
+            Time Range:
+            <select 
+              value={chartSettings.days} 
+              onChange={e => setChartSettings({...chartSettings, days: parseInt(e.target.value)})}
+              style={{marginLeft: 8}}
+            >
+              <option value={3}>3 days</option>
+              <option value={7}>7 days</option>
+              <option value={14}>14 days</option>
+              <option value={30}>30 days</option>
+            </select>
+          </label>
+          <label>
+            <input 
+              type="checkbox" 
+              checked={chartSettings.showTrends}
+              onChange={e => setChartSettings({...chartSettings, showTrends: e.target.checked})}
+            />
+            Show Trends
+          </label>
+          <label>
+            <input 
+              type="checkbox" 
+              checked={chartSettings.showPipelinePerformance}
+              onChange={e => setChartSettings({...chartSettings, showPipelinePerformance: e.target.checked})}
+            />
+            Show Pipeline Performance
+          </label>
+        </div>
+      </div>
+
+      {/* Main Charts Grid */}
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:12}}>
+        <SuccessFailureChart days={chartSettings.days} />
+        <AvgBuildTimeChart days={chartSettings.days} />
+      </div>
+
+      {/* Additional Charts */}
+      {chartSettings.showTrends && (
+        <div style={{marginTop: 12}}>
+          <BuildTrendsChart days={chartSettings.days} />
+        </div>
+      )}
+
+      {chartSettings.showPipelinePerformance && (
+        <div style={{marginTop: 12}}>
+          <PipelinePerformanceChart limit={15} />
+        </div>
+      )}
 
       <div className="filters" style={{marginTop:12}}>
         <select value={filters.provider} onChange={e => setFilters({...filters, provider:e.target.value})}>
@@ -126,7 +132,6 @@ export default function App(){
         </select>
         <input placeholder="Search pipeline" value={filters.q} onChange={e => setFilters({...filters, q:e.target.value})} />
         <button onClick={load}>Refresh</button>
-        <button onClick={generateFallbackChartData}>Generate Chart Data</button>
       </div>
 
       <BuildsTable builds={builds.map(b=>({...b, onClick: ()=>setSelectedBuild(b)}))} />
@@ -138,6 +143,11 @@ export default function App(){
               <div>
                 <div className="label">Selected Build</div>
                 <div className="value">{selectedBuild.pipeline} — {selectedBuild.status}</div>
+                {selectedBuild.duration_seconds && (
+                  <div className="sub-value">
+                    Duration: {Math.round(selectedBuild.duration_seconds)}s
+                  </div>
+                )}
               </div>
               <div>
                 <button onClick={()=>setSelectedBuild(null)}>Close</button>
